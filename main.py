@@ -6,17 +6,21 @@ def gerar_id():
     id = randint(1000, 9000)
     return id
 
+def gerar_isbn():
+    primeira_parte = str(randint(1_000_000, 9_000_000))
+    segunda_parte = str(randint(0, 9))
+    isbn = primeira_parte + '-' + segunda_parte
+    return isbn
+
 class Livro:
-    def __init__(self, titulo, autor, isnb):
+    def __init__(self, titulo, autor):
         self.titulo = titulo
         self.autor = autor
-        self.isnb = isnb
+        self.isnb = gerar_isbn()
         self.status = 'Disponível'
 
     def __str__(self):
-        return f'''TÍTULO: {self.titulo}
-AUTOR: {self.autor}
-STATUS: {self.status}'''
+        return f'''{self.titulo}, {self.autor}, {self.isnb}, {self.status}'''
 
     def esta_disponivel(self):
         if self.status == 'Disponível':
@@ -64,13 +68,19 @@ class Biblioteca:
         self.catalogo_de_livros = []
         self.lista_de_usuarios = []
 
-    def adicionar_livro(self, livro):
-        self.catalogo_de_livros.append(livro)
-        print('Livro adicionado ao catalgo com sucesso!')
+    def adicionar_livro(self):
+        titulo = str(input('Título: '))
+        autor = str(input('Autor: '))
+        novo_livro = Livro(titulo, autor)
+        self.catalogo_de_livros.append(novo_livro)
+        print('Livro adicionado ao catalogo com sucesso!')
 
-    def remover_livro(self, livro):
-        self.catalogo_de_livros.remove(livro)
-        print('Livro removido do catalogo com sucesso!')
+    def remover_livro(self):
+        isbn = str(input('Informe o ISBN do livro a ser removido: '))
+        for livro in self.catalogo_de_livros:
+            if livro.isnb == isbn:
+                self.catalogo_de_livros.remove(livro)
+                print('Livro removido do catalogo com sucesso!')
 
     def emprestar_livro(self, usuario, livro):
         livro.alterar_status('Emprestado')
@@ -82,10 +92,24 @@ class Biblioteca:
         usuario.devolver_livro(livro)
 
     def pesquisar_titulo(self):
-        ...
+        contador = 0
+        titulo = str(input('Insira o título a ser filtrado: '))
+        for livro in self.catalogo_de_livros:
+            if livro.titulo == titulo:
+                contador += 1
+                print(livro)
+        if contador == 0:
+            print('ERRO! Não há nenhum livro com a descrição informada.')
 
     def pesquisar_autor(self):
-        ...
+        contador = 0
+        autor = str(input('Insira o título a ser filtrado: '))
+        for livro in self.catalogo_de_livros:
+            if livro.autor == autor:
+                contador += 1
+                print(livro)
+        if contador == 0:
+            print('ERRO! Não há nenhum livro com o autor informado.')
 
     def exibir_livros(self):
         for livro in self.catalogo_de_livros:
@@ -104,14 +128,11 @@ class Biblioteca:
             print(usuario)
 
 
-
 biblioteca = Biblioteca()
-livro1 = Livro('O Pequeno Príncipe', 'Antoine de Saint-Exupéry', 1)
-livro2 = Livro('Romeu E Julieta', 'William Shakespeare', 2)
-livro3 = Livro('1984', 'George Orwell', 3)
-biblioteca.adicionar_livro(livro1)
-biblioteca.adicionar_livro(livro2)
-biblioteca.adicionar_livro(livro3)
+livro1 = Livro('O Pequeno Príncipe', 'Antoine de Saint-Exupéry')
+livro2 = Livro('Romeu E Julieta', 'William Shakespeare')
+livro3 = Livro('1984', 'George Orwell')
+biblioteca.catalogo_de_livros.extend([livro1, livro2, livro3])
 
 while True:
     opcao = int(input('''[1] EMPRESTIMO
@@ -120,13 +141,13 @@ while True:
 [4] LISTAR USUÁRIOS
 [5] FILTRAR LIVROS
 [6] ADICIONAR LIVRO
-[7] REMOVER LIVROS
+[7] REMOVER LIVRO
 > '''))
     if opcao == 1 or opcao == 2:
         user_encotrado = False
         livro_encontrado = False
         user_id = int(input('Informe o ID do usuário: '))
-        isnb_livro = int(input('Informe o ISNB do livro: '))
+        isnb_livro = str(input('Informe o ISNB do livro: '))
         for usuario in biblioteca.lista_de_usuarios:
 
             if usuario.id_de_usuario == user_id:
@@ -157,7 +178,22 @@ while True:
         biblioteca.exbir_usuarios()
 
     elif opcao == 5:
-        pass
+        opcao_filtragem = int(input('''[1] FILTRAR POR TÍTULO
+[2] FILTRAR POR AUTOR
+> '''))
+        if opcao_filtragem == 1:
+            biblioteca.pesquisar_titulo()
+        elif opcao_filtragem == 2:
+            biblioteca.pesquisar_autor()
 
     elif opcao == 6:
+        biblioteca.adicionar_livro()
+
+    elif opcao == 7:
+        biblioteca.remover_livro()
+
+    elif opcao == 8:
         sys.exit()
+
+    else:
+        print('ERRO! Informe uma opção válida(tente um número entre 1 e 8).')
