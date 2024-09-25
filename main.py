@@ -1,3 +1,4 @@
+import sys
 from random import randint
 
 
@@ -71,11 +72,14 @@ class Biblioteca:
         self.catalogo_de_livros.remove(livro)
         print('Livro removido do catalogo com sucesso!')
 
-    def emprestar_livro(self, usurio, livro):
-        ...
+    def emprestar_livro(self, usuario, livro):
+        livro.alterar_status('Emprestado')
+        usuario.requisitar_livro(livro)
 
-    def devolver_livro(self):
-        ...
+
+    def devolver_livro(self, usuario, livro):
+        livro.alterar_status('Disponível')
+        usuario.devolver_livro(livro)
 
     def pesquisar_titulo(self):
         ...
@@ -83,42 +87,77 @@ class Biblioteca:
     def pesquisar_autor(self):
         ...
 
-    def adicionar_usuario(self, usuario):
-        self.lista_de_usuarios.append(usuario)
+    def exibir_livros(self):
+        for livro in self.catalogo_de_livros:
+            print(livro)
+
+    def adicionar_usuario(self):
+        nome = input('Informe o nome: ')
+        novo_usuario = Usuario(nome)
+        self.lista_de_usuarios.append(novo_usuario)
+        print('Novo usuário cadastrado com sucesso!')
 
     def exbir_usuarios(self):
+        if len(self.lista_de_usuarios) == 0:
+            print('Nenhum usuário cadastrado!')
         for usuario in self.lista_de_usuarios:
             print(usuario)
 
 
 
-
+biblioteca = Biblioteca()
 livro1 = Livro('O Pequeno Príncipe', 'Antoine de Saint-Exupéry', 1)
 livro2 = Livro('Romeu E Julieta', 'William Shakespeare', 2)
 livro3 = Livro('1984', 'George Orwell', 3)
-usuario1 = Usuario('Maria Paula')
-usuario2 = Usuario('Ana Julia')
-usuario3 = Usuario('Maria Cristina')
-
-biblioteca = Biblioteca()
 biblioteca.adicionar_livro(livro1)
 biblioteca.adicionar_livro(livro2)
 biblioteca.adicionar_livro(livro3)
-biblioteca.adicionar_usuario(usuario1)
-biblioteca.adicionar_usuario(usuario2)
-biblioteca.adicionar_usuario(usuario3)
-
-
 
 while True:
     opcao = int(input('''[1] EMPRESTIMO
 [2] DEVOLUCÃO
-[3] LISTA DE LIVROS
-[4] LISTA DE USUÁRIOS
-[5] PESQUISAR LIVROS
+[3] LISTAR LIVROS
+[4] LISTAR USUÁRIOS
+[5] FILTRAR LIVROS
+[6] ADICIONAR LIVRO
+[7] REMOVER LIVROS
 > '''))
-    if opcao == 1:
-        biblioteca.emprestar_livro()
+    if opcao == 1 or opcao == 2:
+        user_encotrado = False
+        livro_encontrado = False
+        user_id = int(input('Informe o ID do usuário: '))
+        isnb_livro = int(input('Informe o ISNB do livro: '))
+        for usuario in biblioteca.lista_de_usuarios:
 
-    if opcao == 4:
+            if usuario.id_de_usuario == user_id:
+                user_encotrado = True
+                for livro in biblioteca.catalogo_de_livros:
+
+                    if livro.isnb == isnb_livro:
+                        livro_encontrado = True
+
+                        if opcao == 1 and livro.esta_disponivel():
+                            biblioteca.emprestar_livro(usuario, livro)
+                        elif opcao == 2:
+                            biblioteca.devolver_livro(usuario, livro)
+
+                if not livro_encontrado:
+                    print('ERRO! Livro não encotrado!')
+
+        if not user_encotrado:
+            print('ERRO! Usuário não encontrado.')
+            res = input('Gostaria de cadastra-lo? [s/n]').lower().strip()[0]
+            if res == 's':
+                biblioteca.adicionar_usuario()
+
+    elif opcao == 3:
+        biblioteca.exibir_livros()
+
+    elif opcao == 4:
         biblioteca.exbir_usuarios()
+
+    elif opcao == 5:
+        pass
+
+    elif opcao == 6:
+        sys.exit()
