@@ -2,6 +2,24 @@ import sys
 from random import randint
 
 
+
+def valida_int(msg):
+    while True:
+        try:
+            n = int(input(msg))
+        except:
+            print('ERRO! Informe um numero inteiro válido.')
+        else:
+            return n
+
+def valida_isnb(msg):
+    while True:
+        isnb = str(input(msg))
+        if len(isnb) == 9 and isnb[7] == '-' and isnb[0:6].isnumeric() and isnb[8].isnumeric():
+            return isnb
+        else:
+            print('ERRO! Informe um isnb válido!')
+
 def gerar_id():
     id = randint(1000, 9000)
     return id
@@ -25,35 +43,35 @@ class Livro:
     def esta_disponivel(self):
         if self.status == 'Disponível':
             return True
-        else:
-            return False
+
 
     def alterar_status(self, novo_status):
         if novo_status == self.status:
             print('ERRO! Novo status igual ao atual.')
         else:
             self.status = novo_status
-            print('Status alterado com sucesso!')
 
 class Usuario:
     def __init__(self, nome):
         self.nome = nome
         self.id_de_usuario = gerar_id()
         self.livros_emprestados = []
-        self.limite_de_emprestimos = 3
+        self.total_de_imprestimos = 0
 
     def __str__(self):
-        return f'''Nome: {self.nome} 
-ID de Usuário: {self.id_de_usuario}'''
+        return f'''{self.nome}, {self.id_de_usuario}, {self.total_de_imprestimos}'''
 
     def requisitar_livro(self, livro):
-        self.livros_emprestados.append(livro)
-        self.limite_de_emprestimos -= 1
-        print('Livro emprestado com sucesso!')
+        if self.total_de_imprestimos <= 3:
+            self.livros_emprestados.append(livro)
+            self.total_de_imprestimos += 1
+            print('Livro emprestado com sucesso!')
+        else:
+            print('ERRO! Usuario excedeu o limite total de emprestimos.')
 
     def devolver_livro(self, livro):
         self.livros_emprestados.remove(livro)
-        self.limite_de_emprestimos += 1
+        self.total_de_imprestimos -= 1
         print('Livro devolvido com sucesso!')
 
     def exibir_livros_emprestados(self):
@@ -64,6 +82,7 @@ ID de Usuário: {self.id_de_usuario}'''
             print('Você não tem livro emprestados.')
 
 class Biblioteca:
+    livro_encontrado = usuario_encontrado = False
     def __init__(self):
         self.catalogo_de_livros = []
         self.lista_de_usuarios = []
@@ -76,20 +95,39 @@ class Biblioteca:
         print('Livro adicionado ao catalogo com sucesso!')
 
     def remover_livro(self):
-        isbn = str(input('Informe o ISBN do livro a ser removido: '))
+        isbn = valida_isnb('Informe o ISBN do livro a ser removido: ')
         for livro in self.catalogo_de_livros:
             if livro.isnb == isbn:
                 self.catalogo_de_livros.remove(livro)
                 print('Livro removido do catalogo com sucesso!')
 
-    def emprestar_livro(self, usuario, livro):
-        livro.alterar_status('Emprestado')
-        usuario.requisitar_livro(livro)
+    def emprestar_livro(self, user_id, isnb_livro):
+        for usuario in self.lista_de_usuarios:
+            if user_id == usuario.id_de_usuario:
+                biblioteca.usuario_encontrado = True
+                for livro in self.catalogo_de_livros:
+                    if livro.isnb == isnb_livro:
+                        if livro.esta_disponivel():
+                            biblioteca.livro_encontrado = True
+                            livro.alterar_status('Emprestado')
+                            usuario.requisitar_livro(livro)
+                        else:
+                            print('ERRO! Livro indisponível para emprestimo.')
+        if not biblioteca.livro_encontrado or not biblioteca.usuario_encontrado:
+            print('ERRO! ID de usuário ou ISNB inválidos.')
 
 
-    def devolver_livro(self, usuario, livro):
-        livro.alterar_status('Disponível')
-        usuario.devolver_livro(livro)
+    def devolver_livro(self, id, isnb):
+        for usuario in self.lista_de_usuarios:
+            if usuario.id_de_usuario == id:
+                biblioteca.usuario_encontrado = True
+                for livro in self.catalogo_de_livros:
+                    if livro.isnb == isnb:
+                        biblioteca.livro_encontrado = True
+                        livro.alterar_status('Disponível')
+                        usuario.devolver_livro(livro)
+        if not biblioteca.livro_encontrado or not biblioteca.usuario_encontrado:
+            print('ERRO! ID de usuário ou ISNB inválidos.')
 
     def pesquisar_titulo(self):
         contador = 0
@@ -119,57 +157,55 @@ class Biblioteca:
         nome = input('Informe o nome: ')
         novo_usuario = Usuario(nome)
         self.lista_de_usuarios.append(novo_usuario)
-        print('Novo usuário cadastrado com sucesso!')
+        print(f'{novo_usuario.nome} foi cadastrado com sucesso. Seu ID é {novo_usuario.id_de_usuario}')
 
     def exbir_usuarios(self):
         if len(self.lista_de_usuarios) == 0:
             print('Nenhum usuário cadastrado!')
-        for usuario in self.lista_de_usuarios:
-            print(usuario)
+        else:
+            for usuario in self.lista_de_usuarios:
+                print(usuario)
 
 
 biblioteca = Biblioteca()
 livro1 = Livro('O Pequeno Príncipe', 'Antoine de Saint-Exupéry')
 livro2 = Livro('Romeu E Julieta', 'William Shakespeare')
 livro3 = Livro('1984', 'George Orwell')
-biblioteca.catalogo_de_livros.extend([livro1, livro2, livro3])
+livro4 = Livro('Dom Casmurro', 'Machdo de Assis')
+livro5 = Livro('As Crônicas De Nárnia', 'C.S Lewis')
+usuario1 = Usuario('Maria Joana')
+usuario2 = Usuario('João da Silva')
+usuario3 = Usuario('Marcos Felipe')
+biblioteca.catalogo_de_livros.extend([livro1, livro2, livro3, livro4, livro5])
+biblioteca.lista_de_usuarios.extend([usuario1, usuario2, usuario3])
 
 while True:
-    opcao = int(input('''[1] EMPRESTIMO
+    opcao = valida_int('''[1] EMPRESTIMO
 [2] DEVOLUCÃO
 [3] LISTAR LIVROS
 [4] LISTAR USUÁRIOS
 [5] FILTRAR LIVROS
 [6] ADICIONAR LIVRO
 [7] REMOVER LIVRO
-> '''))
+> ''')
     if opcao == 1 or opcao == 2:
-        user_encotrado = False
-        livro_encontrado = False
-        user_id = int(input('Informe o ID do usuário: '))
-        isnb_livro = str(input('Informe o ISNB do livro: '))
-        for usuario in biblioteca.lista_de_usuarios:
+        while True:
+            res = input('O usuário já possui cadastro? [s/n]').lower().strip()[0]
+            if res in 'sn':
+                if res == 'n':
+                    biblioteca.adicionar_usuario()
+                break
+            else:
+                print('ERRO! Informe uma opção válida(tente sim ou não).')
 
-            if usuario.id_de_usuario == user_id:
-                user_encotrado = True
-                for livro in biblioteca.catalogo_de_livros:
+        user_id = valida_int('Informe o ID do usuário: ')
+        isnb_livro = valida_isnb('Informe o ISNB do livro: ')
 
-                    if livro.isnb == isnb_livro:
-                        livro_encontrado = True
+        if opcao == 1:
+            biblioteca.emprestar_livro(user_id, isnb_livro)
 
-                        if opcao == 1 and livro.esta_disponivel():
-                            biblioteca.emprestar_livro(usuario, livro)
-                        elif opcao == 2:
-                            biblioteca.devolver_livro(usuario, livro)
-
-                if not livro_encontrado:
-                    print('ERRO! Livro não encotrado!')
-
-        if not user_encotrado:
-            print('ERRO! Usuário não encontrado.')
-            res = input('Gostaria de cadastra-lo? [s/n]').lower().strip()[0]
-            if res == 's':
-                biblioteca.adicionar_usuario()
+        elif opcao == 2:
+            biblioteca.devolver_livro(user_id, isnb_livro)
 
     elif opcao == 3:
         biblioteca.exibir_livros()
@@ -178,13 +214,15 @@ while True:
         biblioteca.exbir_usuarios()
 
     elif opcao == 5:
-        opcao_filtragem = int(input('''[1] FILTRAR POR TÍTULO
+        opcao_filtragem = valida_int('''[1] FILTRAR POR TÍTULO
 [2] FILTRAR POR AUTOR
-> '''))
+> ''')
         if opcao_filtragem == 1:
             biblioteca.pesquisar_titulo()
         elif opcao_filtragem == 2:
             biblioteca.pesquisar_autor()
+        else:
+            print('ERRO! Informe uma opção válida(tente um número entre 1 e 2)!')
 
     elif opcao == 6:
         biblioteca.adicionar_livro()
