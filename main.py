@@ -1,7 +1,14 @@
 import sys
 from random import randint
+from time import sleep
 
 
+
+def cabecalho(msg):
+    tamanho_da_msg = len(msg)+4
+    print('-'* tamanho_da_msg)
+    print(msg)
+    print('-' * tamanho_da_msg)
 
 def valida_int(msg):
     while True:
@@ -14,11 +21,19 @@ def valida_int(msg):
 
 def valida_isnb(msg):
     while True:
-        isnb = str(input(msg))
+        isnb = str(input(msg)).strip()
         if len(isnb) == 9 and isnb[7] == '-' and isnb[0:6].isnumeric() and isnb[8].isnumeric():
             return isnb
         else:
             print('ERRO! Informe um isnb válido!')
+
+def valida_resposta(msg):
+    while True:
+        res = str(input(msg)).strip().lower()[0]
+        if res in 'sn':
+            return res
+        else:
+            print('ERRO! Informe uma opção válida(tente sim ou não).')
 
 def gerar_id():
     id = randint(1000, 9000)
@@ -38,7 +53,7 @@ class Livro:
         self.status = 'Disponível'
 
     def __str__(self):
-        return f'''{self.titulo}, {self.autor}, {self.isnb}, {self.status}'''
+        return f'{self.titulo:<28} {self.autor:<25} {self.isnb:>15} {self.status:>15}'
 
     def esta_disponivel(self):
         if self.status == 'Disponível':
@@ -59,19 +74,19 @@ class Usuario:
         self.total_de_imprestimos = 0
 
     def __str__(self):
-        return f'''{self.nome}, {self.id_de_usuario}, {self.total_de_imprestimos}'''
+        return f'''{self.nome:<28} {self.id_de_usuario:<15} {self.total_de_imprestimos:>10}'''
 
     def requisitar_livro(self, livro):
-        if self.total_de_imprestimos <= 3:
-            self.livros_emprestados.append(livro)
+        if self.total_de_imprestimos < biblioteca.limite_de_emprestimos:
             self.total_de_imprestimos += 1
+            self.livros_emprestados.append(livro)
             print('Livro emprestado com sucesso!')
         else:
             print('ERRO! Usuario excedeu o limite total de emprestimos.')
 
     def devolver_livro(self, livro):
-        self.livros_emprestados.remove(livro)
         self.total_de_imprestimos -= 1
+        self.livros_emprestados.remove(livro)
         print('Livro devolvido com sucesso!')
 
     def exibir_livros_emprestados(self):
@@ -82,6 +97,7 @@ class Usuario:
             print('Você não tem livro emprestados.')
 
 class Biblioteca:
+    limite_de_emprestimos = 3
     livro_encontrado = usuario_encontrado = False
     def __init__(self):
         self.catalogo_de_livros = []
@@ -124,48 +140,59 @@ class Biblioteca:
                 for livro in self.catalogo_de_livros:
                     if livro.isnb == isnb:
                         biblioteca.livro_encontrado = True
-                        livro.alterar_status('Disponível')
-                        usuario.devolver_livro(livro)
+                        if livro.esta_disponivel():
+                            print('ERRO! Livro já consta como devolvido.')
+                        else:
+                            livro.alterar_status('Disponível')
+                            usuario.devolver_livro(livro)
         if not biblioteca.livro_encontrado or not biblioteca.usuario_encontrado:
             print('ERRO! ID de usuário ou ISNB inválidos.')
 
     def pesquisar_titulo(self):
         contador = 0
-        titulo = str(input('Insira o título a ser filtrado: '))
+        titulo_pesquisado = str(input('Insira o título a ser filtrado: ')).strip().title()
+        cabecalho(f'{'TÍTULO':<28} {'AUTOR':<25} {'ISNB':>10} {'STATUS':>16}')
         for livro in self.catalogo_de_livros:
-            if livro.titulo == titulo:
+            if titulo_pesquisado in livro.titulo:
                 contador += 1
                 print(livro)
         if contador == 0:
-            print('ERRO! Não há nenhum livro com a descrição informada.')
+            print('ERRO! Não há nenhum livro com a título informada.')
+        print('-' * 86)
 
     def pesquisar_autor(self):
         contador = 0
-        autor = str(input('Insira o título a ser filtrado: '))
+        autor_pesquisado = str(input('Insira o autor a ser filtrado: ')).strip().title()
+        cabecalho(f'{'TÍTULO':<28} {'AUTOR':<25} {'ISNB':>10} {'STATUS':>16}')
         for livro in self.catalogo_de_livros:
-            if livro.autor == autor:
+            if autor_pesquisado in livro.autor:
                 contador += 1
                 print(livro)
         if contador == 0:
-            print('ERRO! Não há nenhum livro com o autor informado.')
+            print('Não há nenhum livro com o autor informado.')
+        print('-' * 86)
 
     def exibir_livros(self):
+        cabecalho(f'{'TÍTULO':<28} {'AUTOR':<25} {'ISNB':>10} {'STATUS':>16}')
         for livro in self.catalogo_de_livros:
             print(livro)
+        print('-' * 86)
 
     def adicionar_usuario(self):
-        nome = input('Informe o nome: ')
+        nome = input('Informe o nome: ').title().strip()
         novo_usuario = Usuario(nome)
         self.lista_de_usuarios.append(novo_usuario)
         print(f'{novo_usuario.nome} foi cadastrado com sucesso. Seu ID é {novo_usuario.id_de_usuario}')
 
+
     def exbir_usuarios(self):
+        cabecalho(f'{'NOME':<28} {'ID DE USUÁRIO':<23} {'N° EMPRESTIMOS':>15}')
         if len(self.lista_de_usuarios) == 0:
             print('Nenhum usuário cadastrado!')
         else:
             for usuario in self.lista_de_usuarios:
                 print(usuario)
-
+        print('-' * 73)
 
 biblioteca = Biblioteca()
 livro1 = Livro('O Pequeno Príncipe', 'Antoine de Saint-Exupéry')
@@ -180,32 +207,34 @@ biblioteca.catalogo_de_livros.extend([livro1, livro2, livro3, livro4, livro5])
 biblioteca.lista_de_usuarios.extend([usuario1, usuario2, usuario3])
 
 while True:
-    opcao = valida_int('''[1] EMPRESTIMO
+    opcao = valida_int('''
+MENU
+[1] EMPRESTIMO
 [2] DEVOLUCÃO
 [3] LISTAR LIVROS
 [4] LISTAR USUÁRIOS
 [5] FILTRAR LIVROS
 [6] ADICIONAR LIVRO
 [7] REMOVER LIVRO
+[8] SAIR
 > ''')
     if opcao == 1 or opcao == 2:
-        while True:
-            res = input('O usuário já possui cadastro? [s/n]').lower().strip()[0]
-            if res in 'sn':
-                if res == 'n':
-                    biblioteca.adicionar_usuario()
-                break
-            else:
-                print('ERRO! Informe uma opção válida(tente sim ou não).')
-
-        user_id = valida_int('Informe o ID do usuário: ')
-        isnb_livro = valida_isnb('Informe o ISNB do livro: ')
-
         if opcao == 1:
-            biblioteca.emprestar_livro(user_id, isnb_livro)
+            res = valida_resposta('O usuário já possui cadastro? [s/n]')
+            if res == 'n':
+                biblioteca.adicionar_usuario()
+        user_id = valida_int('Informe o ID do usuário: ')
+        while True:
+            isnb_livro = valida_isnb('Informe o ISNB do livro: ')
+            if opcao == 1:
+                biblioteca.emprestar_livro(user_id, isnb_livro)
+            else:
+                biblioteca.devolver_livro(user_id, isnb_livro)
 
-        elif opcao == 2:
-            biblioteca.devolver_livro(user_id, isnb_livro)
+            mais_livros = valida_resposta('Mais algum outro livro?[s/n] ')
+            if mais_livros == 'n':
+                break
+
 
     elif opcao == 3:
         biblioteca.exibir_livros()
@@ -231,6 +260,10 @@ while True:
         biblioteca.remover_livro()
 
     elif opcao == 8:
+        print('Saindo', end='')
+        for c in range(3):
+            sleep(1)
+            print('. ', end='')
         sys.exit()
 
     else:
