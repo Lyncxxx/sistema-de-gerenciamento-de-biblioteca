@@ -1,49 +1,7 @@
 import sys
-from random import randint
 from time import sleep
+from uteis import *
 
-
-
-def cabecalho(msg):
-    tamanho_da_msg = len(msg)+4
-    print('-'* tamanho_da_msg)
-    print(msg)
-    print('-' * tamanho_da_msg)
-
-def valida_int(msg):
-    while True:
-        try:
-            n = int(input(msg))
-        except:
-            print('ERRO! Informe um numero inteiro válido.')
-        else:
-            return n
-
-def valida_isnb(msg):
-    while True:
-        isnb = str(input(msg)).strip()
-        if len(isnb) == 9 and isnb[7] == '-' and isnb[0:6].isnumeric() and isnb[8].isnumeric():
-            return isnb
-        else:
-            print('ERRO! Informe um isnb válido!')
-
-def valida_resposta(msg):
-    while True:
-        res = str(input(msg)).strip().lower()[0]
-        if res in 'sn':
-            return res
-        else:
-            print('ERRO! Informe uma opção válida(tente sim ou não).')
-
-def gerar_id():
-    id = randint(1000, 9000)
-    return id
-
-def gerar_isbn():
-    primeira_parte = str(randint(1_000_000, 9_000_000))
-    segunda_parte = str(randint(0, 9))
-    isbn = primeira_parte + '-' + segunda_parte
-    return isbn
 
 class Livro:
     def __init__(self, titulo, autor):
@@ -58,7 +16,6 @@ class Livro:
     def esta_disponivel(self):
         if self.status == 'Disponível':
             return True
-
 
     def alterar_status(self, novo_status):
         if novo_status == self.status:
@@ -194,77 +151,81 @@ class Biblioteca:
                 print(usuario)
         print('-' * 73)
 
-biblioteca = Biblioteca()
-livro1 = Livro('O Pequeno Príncipe', 'Antoine de Saint-Exupéry')
-livro2 = Livro('Romeu E Julieta', 'William Shakespeare')
-livro3 = Livro('1984', 'George Orwell')
-livro4 = Livro('Dom Casmurro', 'Machdo de Assis')
-livro5 = Livro('As Crônicas De Nárnia', 'C.S Lewis')
-usuario1 = Usuario('Maria Joana')
-usuario2 = Usuario('João da Silva')
-usuario3 = Usuario('Marcos Felipe')
-biblioteca.catalogo_de_livros.extend([livro1, livro2, livro3, livro4, livro5])
-biblioteca.lista_de_usuarios.extend([usuario1, usuario2, usuario3])
-
-while True:
-    opcao = valida_int('''
-MENU
-[1] EMPRESTIMO
-[2] DEVOLUCÃO
-[3] LISTAR LIVROS
-[4] LISTAR USUÁRIOS
-[5] FILTRAR LIVROS
-[6] ADICIONAR LIVRO
-[7] REMOVER LIVRO
-[8] SAIR
-> ''')
-    if opcao == 1 or opcao == 2:
-        if opcao == 1:
-            res = valida_resposta('O usuário já possui cadastro? [s/n]')
-            if res == 'n':
-                biblioteca.adicionar_usuario()
-        user_id = valida_int('Informe o ID do usuário: ')
-        while True:
-            isnb_livro = valida_isnb('Informe o ISNB do livro: ')
+def main():
+    while True:
+        opcao = valida_int('''
+    MENU
+    [1] EMPRESTIMO
+    [2] DEVOLUCÃO
+    [3] LISTAR LIVROS
+    [4] LISTAR USUÁRIOS
+    [5] FILTRAR LIVROS
+    [6] ADICIONAR LIVRO
+    [7] REMOVER LIVRO
+    [8] SAIR
+    > ''')
+        if opcao == 1 or opcao == 2:
             if opcao == 1:
-                biblioteca.emprestar_livro(user_id, isnb_livro)
+                res = valida_resposta('O usuário já possui cadastro? [s/n]')
+                if res == 'n':
+                    biblioteca.adicionar_usuario()
+            user_id = valida_int('Informe o ID do usuário: ')
+            while True:
+                isnb_livro = valida_isnb('Informe o ISNB do livro: ')
+                if opcao == 1:
+                    biblioteca.emprestar_livro(user_id, isnb_livro)
+                else:
+                    biblioteca.devolver_livro(user_id, isnb_livro)
+
+                mais_livros = valida_resposta('Mais algum outro livro?[s/n] ')
+                if mais_livros == 'n':
+                    break
+
+
+        elif opcao == 3:
+            biblioteca.exibir_livros()
+
+        elif opcao == 4:
+            biblioteca.exbir_usuarios()
+
+        elif opcao == 5:
+            opcao_filtragem = valida_int('''[1] FILTRAR POR TÍTULO
+    [2] FILTRAR POR AUTOR
+    > ''')
+            if opcao_filtragem == 1:
+                biblioteca.pesquisar_titulo()
+            elif opcao_filtragem == 2:
+                biblioteca.pesquisar_autor()
             else:
-                biblioteca.devolver_livro(user_id, isnb_livro)
+                print('ERRO! Informe uma opção válida(tente um número entre 1 e 2)!')
 
-            mais_livros = valida_resposta('Mais algum outro livro?[s/n] ')
-            if mais_livros == 'n':
-                break
+        elif opcao == 6:
+            biblioteca.adicionar_livro()
 
+        elif opcao == 7:
+            biblioteca.remover_livro()
 
-    elif opcao == 3:
-        biblioteca.exibir_livros()
+        elif opcao == 8:
+            print('Saindo', end='')
+            for c in range(3):
+                sleep(1)
+                print('. ', end='')
+            sys.exit()
 
-    elif opcao == 4:
-        biblioteca.exbir_usuarios()
-
-    elif opcao == 5:
-        opcao_filtragem = valida_int('''[1] FILTRAR POR TÍTULO
-[2] FILTRAR POR AUTOR
-> ''')
-        if opcao_filtragem == 1:
-            biblioteca.pesquisar_titulo()
-        elif opcao_filtragem == 2:
-            biblioteca.pesquisar_autor()
         else:
-            print('ERRO! Informe uma opção válida(tente um número entre 1 e 2)!')
+            print('ERRO! Informe uma opção válida(tente um número entre 1 e 8).')
 
-    elif opcao == 6:
-        biblioteca.adicionar_livro()
 
-    elif opcao == 7:
-        biblioteca.remover_livro()
-
-    elif opcao == 8:
-        print('Saindo', end='')
-        for c in range(3):
-            sleep(1)
-            print('. ', end='')
-        sys.exit()
-
-    else:
-        print('ERRO! Informe uma opção válida(tente um número entre 1 e 8).')
+if __name__ == '__main__':
+    biblioteca = Biblioteca()
+    livro1 = Livro('O Pequeno Príncipe', 'Antoine de Saint-Exupéry')
+    livro2 = Livro('Romeu E Julieta', 'William Shakespeare')
+    livro3 = Livro('1984', 'George Orwell')
+    livro4 = Livro('Dom Casmurro', 'Machdo de Assis')
+    livro5 = Livro('As Crônicas De Nárnia', 'C.S Lewis')
+    usuario1 = Usuario('Maria Joana')
+    usuario2 = Usuario('João da Silva')
+    usuario3 = Usuario('Marcos Felipe')
+    biblioteca.catalogo_de_livros.extend([livro1, livro2, livro3, livro4, livro5])
+    biblioteca.lista_de_usuarios.extend([usuario1, usuario2, usuario3])
+    main()
